@@ -15,6 +15,9 @@ import mk.ukim.finki.wp.emtlab.model.enums.State;
 public class Book extends BaseAuditableEntity{
 
     @Column(nullable = false)
+    private Boolean deleted=false;
+
+    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
@@ -38,6 +41,7 @@ public class Book extends BaseAuditableEntity{
         this.author = author;
         this.state = state;
         this.availableCopies = availableCopies;
+        this.deleted=false;
     }
 
     public State getState() {

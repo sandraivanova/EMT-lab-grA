@@ -3,6 +3,7 @@ package mk.ukim.finki.wp.emtlab.service.application.impl;
 import mk.ukim.finki.wp.emtlab.model.domain.Author;
 import mk.ukim.finki.wp.emtlab.model.dto.CreateBookDto;
 import mk.ukim.finki.wp.emtlab.model.dto.DisplayBookDto;
+import mk.ukim.finki.wp.emtlab.model.enums.Category;
 import mk.ukim.finki.wp.emtlab.service.application.BookApplicationService;
 import mk.ukim.finki.wp.emtlab.service.domain.AuthorService;
 import mk.ukim.finki.wp.emtlab.service.domain.BookService;
@@ -60,5 +61,10 @@ public class BookApplicationServiceImpl implements BookApplicationService {
     @Override
     public Optional<DisplayBookDto> rent(Long id) {
         return bookService.rent(id).map(DisplayBookDto::from);
+    }
+
+    @Override
+    public List<DisplayBookDto> findByCategory(Category category) {
+        return DisplayBookDto.from(bookService.findByCategory(category));
     }
 }

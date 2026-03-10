@@ -1,6 +1,7 @@
 package mk.ukim.finki.wp.emtlab.service.domain;
 
 import mk.ukim.finki.wp.emtlab.model.domain.Book;
+import mk.ukim.finki.wp.emtlab.model.enums.Category;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,4 +18,6 @@ public interface BookService {
     Optional<Book> deleteById(Long id);
 
     Optional<Book> rent(Long id);
+
+    List<Book>findByCategory(Category category);
 }

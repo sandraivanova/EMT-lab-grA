@@ -3,6 +3,7 @@ package mk.ukim.finki.wp.emtlab.web.controller;
 import jakarta.validation.Valid;
 import mk.ukim.finki.wp.emtlab.model.dto.CreateBookDto;
 import mk.ukim.finki.wp.emtlab.model.dto.DisplayBookDto;
+import mk.ukim.finki.wp.emtlab.model.enums.Category;
 import mk.ukim.finki.wp.emtlab.service.application.BookApplicationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -22,6 +23,11 @@ public class BookController {
     @GetMapping
     public ResponseEntity<List<DisplayBookDto>> findAll() {
         return ResponseEntity.ok(bookApplicationService.findAll());
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<DisplayBookDto>> findByCategory(@RequestParam Category category) {
+        return ResponseEntity.ok(bookApplicationService.findByCategory(category));
     }
 
     @GetMapping("/{id}")

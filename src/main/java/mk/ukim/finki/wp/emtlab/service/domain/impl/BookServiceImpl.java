@@ -1,6 +1,7 @@
 package mk.ukim.finki.wp.emtlab.service.domain.impl;
 
 import mk.ukim.finki.wp.emtlab.model.domain.Book;
+import mk.ukim.finki.wp.emtlab.model.enums.Category;
 import mk.ukim.finki.wp.emtlab.model.enums.State;
 import mk.ukim.finki.wp.emtlab.repository.BookRepository;
 import mk.ukim.finki.wp.emtlab.service.domain.BookService;
@@ -19,12 +20,12 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public List<Book> findAll() {
-        return bookRepository.findAll();
+        return bookRepository.findAllByDeletedFalse();
     }
 
     @Override
     public Optional<Book> findById(Long id) {
-        return bookRepository.findById(id);
+        return bookRepository.findByIdAndDeletedFalse(id);
     }
 
     @Override
@@ -52,8 +53,10 @@ public class BookServiceImpl implements BookService {
                     if (book.getState() != State.BAD) {
                         throw new IllegalStateException("Only books in BAD condition can be deleted.");
                     }
-                    bookRepository.delete(book);
-                    return book;
+//                    bookRepository.delete(book);
+//                    return book;
+                    book.setDeleted(true);
+                    return bookRepository.save(book);
                 })
                 ;
     }
@@ -73,4 +76,11 @@ public class BookServiceImpl implements BookService {
                     book.setAvailableCopies(book.getAvailableCopies() - 1);
                     return bookRepository.save(book);
                 });    }
+
+    @Override
+    public List<Book> findByCategory(Category category) {
+        return bookRepository.findAllByDeletedFalseAndCategory(category);
+    }
+
+
 }
