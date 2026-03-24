@@ -12,6 +12,20 @@ import mk.ukim.finki.wp.emtlab.model.enums.State;
 @Setter
 @NoArgsConstructor
 @Table(name = "books")
+@NamedEntityGraph(
+        name = "book-author-country-graph",
+        attributeNodes = {
+                @NamedAttributeNode(value = "author", subgraph = "author-country-subgraph")
+        },
+        subgraphs = {
+                @NamedSubgraph(
+                        name = "author-country-subgraph",
+                        attributeNodes = {
+                                @NamedAttributeNode("country")
+                        }
+                )
+        }
+)
 public class Book extends BaseAuditableEntity{
 
     @Column(nullable = false)

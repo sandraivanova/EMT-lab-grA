@@ -1,10 +1,18 @@
 package mk.ukim.finki.wp.emtlab.service.domain.impl;
 
+import jakarta.transaction.Transactional;
+import mk.ukim.finki.wp.emtlab.events.BookRentedEvent;
 import mk.ukim.finki.wp.emtlab.model.domain.Book;
 import mk.ukim.finki.wp.emtlab.model.enums.Category;
 import mk.ukim.finki.wp.emtlab.model.enums.State;
+import mk.ukim.finki.wp.emtlab.model.projection.BookSummaryProjection;
 import mk.ukim.finki.wp.emtlab.repository.BookRepository;
 import mk.ukim.finki.wp.emtlab.service.domain.BookService;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,9 +21,12 @@ import java.util.Optional;
 @Service
 public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    public BookServiceImpl(BookRepository bookRepository) {
+
+    public BookServiceImpl(BookRepository bookRepository, ApplicationEventPublisher applicationEventPublisher) {
         this.bookRepository = bookRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Override
@@ -61,6 +72,7 @@ public class BookServiceImpl implements BookService {
                 ;
     }
 
+    @Transactional
     @Override
     public Optional<Book> rent(Long id) {
         return bookRepository.findById(id)
@@ -74,12 +86,52 @@ public class BookServiceImpl implements BookService {
                     }
 
                     book.setAvailableCopies(book.getAvailableCopies() - 1);
-                    return bookRepository.save(book);
-                });    }
+                    Book savedBook = bookRepository.save(book);
+
+                    applicationEventPublisher.publishEvent(
+                            new BookRentedEvent(
+                                    savedBook.getId(),
+                                    savedBook.getName(),
+                                    savedBook.getAvailableCopies()
+                            )
+                    );
+
+                    return savedBook;
+                });
+    }
 
     @Override
     public List<Book> findByCategory(Category category) {
         return bookRepository.findAllByDeletedFalseAndCategory(category);
+    }
+
+    @Override
+    public Page<Book> findAll(int page, int size, String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return bookRepository.findAllByDeletedFalse(pageable);
+    }
+
+    @Override
+    public Page<Book> filter(Category category,
+                             State state,
+                             Long authorId,
+                             Boolean available,
+                             int page,
+                             int size,
+                             String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return bookRepository.filterBooks(category, state, authorId, available, pageable);
+    }
+
+    @Override
+    public Page<BookSummaryProjection> findAllSummary(int page, int size, String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return bookRepository.findAllProjectedBy(pageable);
+    }
+
+    @Override
+    public List<Book> findAllWithAuthorAndCountry() {
+        return bookRepository.findAllWithAuthorAndCountry();
     }
 
 
