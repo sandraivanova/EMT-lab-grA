@@ -7,6 +7,7 @@ import mk.ukim.finki.wp.emtlab.model.enums.Category;
 import mk.ukim.finki.wp.emtlab.model.enums.State;
 import mk.ukim.finki.wp.emtlab.model.projection.BookSummaryProjection;
 import mk.ukim.finki.wp.emtlab.repository.BookRepository;
+import mk.ukim.finki.wp.emtlab.service.domain.BookHistoryService;
 import mk.ukim.finki.wp.emtlab.service.domain.BookService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -20,13 +21,15 @@ import java.util.Optional;
 
 @Service
 public class BookServiceImpl implements BookService {
+    BookHistoryService bookHistoryService;
     private final BookRepository bookRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
 
-    public BookServiceImpl(BookRepository bookRepository, ApplicationEventPublisher applicationEventPublisher) {
+    public BookServiceImpl(BookRepository bookRepository, ApplicationEventPublisher applicationEventPublisher, BookHistoryService bookHistoryService) {
         this.bookRepository = bookRepository;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.bookHistoryService=bookHistoryService;
     }
 
     @Override
@@ -41,8 +44,9 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Book create(Book book) {
-        return bookRepository.save(book);
-    }
+        Book savedBook = bookRepository.save(book);
+        bookHistoryService.recordAdd(savedBook.getId());
+        return savedBook;    }
 
     @Override
     public Optional<Book> update(Long id, Book book) {
@@ -53,7 +57,10 @@ public class BookServiceImpl implements BookService {
                     existingBook.setState(book.getState());
                     existingBook.setCategory(book.getCategory());
                     existingBook.setAvailableCopies(book.getAvailableCopies());
-                    return bookRepository.save(existingBook);
+
+                    Book updatedBook = bookRepository.save(existingBook);
+                    bookHistoryService.recordUpdate(updatedBook.getId());
+                    return updatedBook;
                 });
     }
 
@@ -64,12 +71,12 @@ public class BookServiceImpl implements BookService {
                     if (book.getState() != State.BAD) {
                         throw new IllegalStateException("Only books in BAD condition can be deleted.");
                     }
-//                    bookRepository.delete(book);
-//                    return book;
+
                     book.setDeleted(true);
-                    return bookRepository.save(book);
-                })
-                ;
+                    Book deletedBook = bookRepository.save(book);
+                    bookHistoryService.recordDelete(deletedBook.getId());
+                    return deletedBook;
+                });
     }
 
     @Transactional
